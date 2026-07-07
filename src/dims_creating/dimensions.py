@@ -7,18 +7,22 @@ logger = get_logger()
 
 
 class DimensionBuilder:
+    """
+    Builds the dimension tables for the star schema from the cleaned retail database.
+    Generates and replaces dim_customer, dim_product, dim_country, and dim_date tables
+    to optimize database queries and visual analytics.
+    """
 
     def __init__(self):
-
+        """Initializes database engine and loads cleaned transactions into memory."""
         self.engine = get_engine()
-
         self.df = pd.read_sql(
             "SELECT * FROM online_retail_clean",
             self.engine
         )
 
     def create_dim_customer(self):
-
+        """Creates the customer dimension table 'dim_customer' and writes it to the database."""
         logger.info(
             "creating dim customer"
         )
@@ -44,7 +48,7 @@ class DimensionBuilder:
         )
 
     def create_dim_product(self):
-
+        """Creates the product dimension table 'dim_product' and writes it to the database."""
         logger.info(
             "creating dim product"
         )
@@ -72,7 +76,7 @@ class DimensionBuilder:
         )
 
     def create_dim_country(self):
-
+        """Creates the country dimension table 'dim_country' and writes it to the database."""
         logger.info(
             "creating dim country"
         )
@@ -97,7 +101,7 @@ class DimensionBuilder:
         )
 
     def create_dim_date(self):
-
+        """Creates the date dimension table 'dim_date' and writes it to the database."""
         logger.info(
             "creating dim date"
         )
@@ -127,7 +131,7 @@ class DimensionBuilder:
         )
 
     def build_dimensions(self):
-
+        """Orchestrates building all dimension tables sequentially."""
         self.create_dim_customer()
 
         self.create_dim_product()

@@ -1,5 +1,8 @@
 # End-to-End E-Commerce ETL, ML Customer Segmentation & BI Pipeline
 
+> 💼 **Business Problem & Context**
+> E-commerce marketing teams need to prioritize retention spend. This pipeline segments customers by purchasing behavior so marketing can target "At-Risk" customers with win-back campaigns and reward "VIP" customers, instead of treating all customers uniformly.
+
 An end-to-end data engineering and machine learning project that processes e-commerce retail transactions, cleans and validates the dataset, loads it into a PostgreSQL database, segments customers using K-Means clustering, and visualizes business metrics in Power BI.
 
 ---
@@ -45,7 +48,13 @@ flowchart TD
 
 ## 🧠 ML Customer Segmentation Insights
 
-The pipeline executes a K-Means clustering model ($K=4$) on customer RFM behavior to dynamically label customer value profiles:
+The optimal number of clusters was determined to be **$K=4$** by evaluating the elbow curve of inertia and the silhouette scores for $K \in [2, 8]$:
+
+- **$K=2$** yields a high silhouette score ($0.4325$), but represents an oversimplified segmentation (e.g., active vs. inactive) which is not actionable for personalized marketing.
+- For **$K \ge 3$**, **$K=4$** achieves the highest silhouette score ($0.3369$) compared to **$K=3$** ($0.3364$) and **$K=5$** ($0.3193$).
+- The elbow plot of inertia shows a distinct slow down in the rate of descent at **$K=4$** (bending from $4882.65$ at $K=3$ to $3953.00$ at $K=4$).
+
+The K-Means clustering model partitions customer RFM behavior into 4 distinct value-based profiles:
 
 | Segment | Description | Profile |
 | :--- | :--- | :--- |
@@ -53,6 +62,8 @@ The pipeline executes a K-Means clustering model ($K=4$) on customer RFM behavio
 | **Loyal / Active** | Frequent purchasers | Low Recency, moderate-to-high order count and spend. |
 | **At-Risk** | Formerly active customers | Moderate-to-high Recency, below-average frequency and spend. |
 | **Hibernating / Lost** | Dormant customers | High Recency, low frequency, and low spend. |
+
+*Visual validation plot can be found in `notebooks/cluster_selection_plot.png`.*
 
 ---
 

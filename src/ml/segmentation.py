@@ -9,11 +9,19 @@ logger = get_logger()
 
 
 class CustomerSegmenter:
+    """
+    ML Customer Segmentation pipeline using K-Means clustering.
+    Calculates Recency, Frequency, and Monetary (RFM) metrics from transaction records,
+    scales features to handle skewness, performs K-Means clustering, and maps clusters
+    to interpretable customer segments (VIP, Loyal, At-Risk, Hibernating).
+    """
 
     def __init__(self):
+        """Initializes database engine connection."""
         self.engine = get_engine()
 
     def load_data(self):
+        """Loads cleaned online retail records from database staging table."""
         logger.info("loading data for customer segmentation")
         query = """
         SELECT
@@ -28,6 +36,15 @@ class CustomerSegmenter:
         return df
 
     def calculate_rfm(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculates Recency, Frequency, and Monetary values for each customer.
+        
+        Parameters:
+            df (pd.DataFrame): Input transactions.
+            
+        Returns:
+            pd.DataFrame: RFM metrics grouped by CustomerID.
+        """
         logger.info("calculating RFM metrics")
         
         df["InvoiceDate"] = pd.to_datetime(df["InvoiceDate"])
@@ -48,6 +65,16 @@ class CustomerSegmenter:
         return rfm
 
     def preprocess_and_segment(self, rfm: pd.DataFrame) -> pd.DataFrame:
+        """
+        Preprocesses RFM features (handles zeros, applies log scaling, standardizes)
+        and clusters customers using K-Means (K=4).
+        
+        Parameters:
+            rfm (pd.DataFrame): Calculated RFM dataframe.
+            
+        Returns:
+            pd.DataFrame: RFM dataframe enriched with cluster indices and segment names.
+        """
         logger.info("preprocessing features and running K-Means clustering")
         
         rfm_features = rfm[["Recency", "Frequency", "Monetary"]].copy()
@@ -94,12 +121,17 @@ class CustomerSegmenter:
         return rfm
 
     def save_to_db(self, rfm: pd.DataFrame):
+        """
+        Saves segmented RFM profiles to database dim_customer table, and optionally
+        uploads the dimensions file to AWS S3 if enabled.
+        """
         logger.info("saving segments back to dim_customer table")
         
         dim_customer = rfm[[
             "CustomerID", "Recency", "Frequency", "Monetary", "Segment"
         ]]
         
+        # Database Save
         dim_customer.to_sql(
             "dim_customer",
             self.engine,
@@ -108,7 +140,40 @@ class CustomerSegmenter:
         )
         logger.info(f"Successfully saved {len(dim_customer)} records to dim_customer")
 
+        # Optional AWS S3 Upload
+        from src.config.settings import (
+            USE_S3,
+            AWS_ACCESS_KEY_ID,
+            AWS_SECRET_ACCESS_KEY,
+            AWS_REGION,
+            S3_BUCKET,
+            S3_PROCESSED_KEY
+        )
+        import boto3
+        import io
+
+        if USE_S3 and S3_BUCKET:
+            try:
+                logger.info(f"Uploading segmented customer dimensions to S3: {S3_BUCKET}/{S3_PROCESSED_KEY}")
+                s3_client = boto3.client(
+                    "s3",
+                    aws_access_key_id=AWS_ACCESS_KEY_ID,
+                    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+                    region_name=AWS_REGION
+                )
+                csv_buffer = io.StringIO()
+                dim_customer.to_csv(csv_buffer, index=False)
+                s3_client.put_object(
+                    Bucket=S3_BUCKET,
+                    Key=S3_PROCESSED_KEY,
+                    Body=csv_buffer.getvalue()
+                )
+                logger.info("Successfully uploaded dim_customer to S3.")
+            except Exception as e:
+                logger.error(f"Failed to upload dim_customer to S3: {e}")
+
     def run_segmentation(self):
+        """Runs the complete customer segmentation pipeline end-to-end."""
         try:
             logger.info("starting customer segmentation pipeline")
             df = self.load_data()

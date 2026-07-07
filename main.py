@@ -20,7 +20,7 @@ def main():
         print(f"{metric}:{value}")
 
     #transformation
-    print("\nstsrting data transformation\n")
+    print("\nstarting data transformation\n")
     transformer = DataTransformer(df)
     transformer.clean_data()
     featured_df = transformer.create_features()

@@ -21,3 +21,13 @@ DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME", "retail_warehouse")
 
+# AWS S3 Settings
+USE_S3 = os.getenv("USE_S3", "False").lower() in ("true", "1", "yes")
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+S3_BUCKET = os.getenv("S3_BUCKET", "")
+S3_RAW_KEY = os.getenv("S3_RAW_KEY", "raw/Online Retail.csv")
+S3_PROCESSED_KEY = os.getenv("S3_PROCESSED_KEY", "processed/dim_customer.csv")
+
+
